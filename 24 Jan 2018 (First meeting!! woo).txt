@@ -1,0 +1,31 @@
+﻿Meeting time
+        Tuesdays 5:20 - 6:10
+
+
+Questions (copied from questions document)
+        What are you currently using, and what limitations does this process have?
+        Is access when offline a priority?
+Data/wifi required vs can access w/o (AKA some data backed up on device)
+                App may download data every so often and save for going through no-data areas
+        What platforms should the software be usable on?
+Platforms? (computer, mobile, tablet?)
+                Bootstrap - Library to format to mobile
+                Could use Unity to do an app
+        What kind of summarized data should the software present?
+                Basic graphs and ...
+        Can we take a look at the spreadsheets to see the data type?
+                Currently using google sheets or excel
+        What level of security concerns should we be aware of?
+
+
+How vital are each of these functionalities?
+
+
+
+
+Only she can edit
+                Start w/ app cannot edit at all (outside app)
+        Put down notes
+                SQL - language for pulling out data and making extrapolations and stuff
+                Do something with the patterns
+Dynamic database?
