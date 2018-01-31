@@ -1,4 +1,4 @@
-﻿Meeting time
+Meeting time
         Tuesdays 5:20 - 6:10
 
 
@@ -16,7 +16,7 @@ Platforms? (computer, mobile, tablet?)
         Can we take a look at the spreadsheets to see the data type?
                 Currently using google sheets or excel
         What level of security concerns should we be aware of?
-
+		We have someone who may look into securing your product. Do not worry too 		much about it.
 
 How vital are each of these functionalities?
 

@@ -1,4 +1,4 @@
-﻿1. The organization and the people met with.
+1. The organization and the people met with.
    1. Knox County Health Department
    2. Carmen Barbuto
 1. And overview of the goal of the projects
@@ -21,7 +21,7 @@
       3. Metadata, a brief description of each data set
       4. Predictive analytics, the ability to predict future trends based on existing data
       5. Ability to export graphs
-1. The major functions (from above)
+1. The major functions (based on the priorities from above)
    1. Web based software/program 
    2. Accessible offsite 
    3. Data input/editing (meaning who can enter/alter data) abilities limited to myself and members of the leadership team 
@@ -31,7 +31,7 @@
    7. A place that holds demographic data (Knox County demographics) 
    8. Aggregation, the ability to search data when looking for something specific
 1. A description of the data being stored and processed
-   1. Patient demographics, patient counts, payer mix, services used, costs
+   1. Patient demographics, patient counts, payer mix, services used, costs et cetera
    2. Number of individuals or money associated with each category per month
 
 
