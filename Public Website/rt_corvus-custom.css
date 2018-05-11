@@ -1,0 +1,29 @@
+!ocial-buttons {
+
+  float: none;
+
+  text-align: center;
+
+}
+
+ 
+
+.rt-social-buttons .social-button {
+
+  display: inline-block;
+
+  float: none;
+
+}
+
+.az-in-sidebar .box6 *{
+    z-index: auto;
+}
+
+.az-in-sidebar .modal-backdrop.fade.in{
+    opacity: 0.5;
+}
+
+.az-in-sidebar #modazdirectory__modal{
+    text-align: left !important;
+}

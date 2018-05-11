@@ -1,0 +1,1225 @@
+
+
+<!doctype html>
+
+<html xml:lang="en-gb" lang="en-gb" >
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta charset="UTF-8">
+
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/mediaqueries.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/rtl.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/thirdparty-k2.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/rt_corvus-custom.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/cards.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/strips.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/rokbox.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/menu.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/grid-responsive.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/bootstrap.css" rel="stylesheet" type="text/css" />
+<link href="https://cslab.kenyon.edu/class/ssd/khanm/master-b39199700cdbd41c2e5cc02dd9c68e45.css" rel="stylesheet" type="text/css" />
+
+
+<style type="text/css">
+
+</style>      
+    
+	<script>
+		
+			function makeApiCall() {
+			var params = {
+			// The ID of the spreadsheet to retrieve data from.
+			spreadsheetId: '1KJRexOP9Sv8PVV73UFLpJn9rk4_Jz-2tpSOmP4cCptI',  // TODO: Update placeholder value.
+
+			// The A1 notation of the values to retrieve.
+			ranges: ['Vital Statistics', 'Public Health Outreach', 'Immunizations', 'Environmental Health', 'Planning, Ed, Promotion', 'WIC', 'BCMH', 'Benefit Bank', 'Health Center'],  // TODO: Update placeholder value.
+
+			// How values should be represented in the output.
+			// The default render option is ValueRenderOption.FORMATTED_VALUE.
+			// valueRenderOption: '',  // TODO: Update placeholder value.
+
+			// How dates, times, and durations should be represented in the output.
+			// This is ignored if value_render_option is
+			// FORMATTED_VALUE.
+			// The default dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+			//dateTimeRenderOption: '',  // TODO: Update placeholder value.
+			};
+
+			var request = gapi.client.sheets.spreadsheets.values.batchGet(params);
+			request.then(function(response) {
+			// TODO: Change code below to process the `response` object:
+
+			//set a global variable to access data in other functions
+			globalResponse = response;
+
+			//build dropdown of Month ranges
+			monthDropdown();
+			//buildDropdown();
+			//buildTable(response.result);
+			//console.log("build table actually finished");
+			}, function(reason) {
+			console.error('error: ' + reason.result.error.message);
+			});
+			}
+
+			function initClient() {
+			var API_KEY = 'AIzaSyC8TniH7F3Md6zdUfZHQtZ6RB4-CmNNc-w';  // TODO: Update placeholder with desired API key.
+
+			var CLIENT_ID = '961050385133-sb3f9auhjja6edijphor5386s3chje0c.apps.googleusercontent.com';  // TODO: Update placeholder with desired client ID.
+
+			// TODO: Authorize using one of the following scopes:
+			//   'https://www.googleapis.com/auth/drive'
+			//   'https://www.googleapis.com/auth/drive.file'
+			//   'https://www.googleapis.com/auth/drive.readonly'
+			//   'https://www.googleapis.com/auth/spreadsheets'
+			//   'https://www.googleapis.com/auth/spreadsheets.readonly'
+			var SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+
+			gapi.client.init({
+			'apiKey': API_KEY,
+			'clientId': CLIENT_ID,
+			'scope': SCOPE,
+			'discoveryDocs': ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+			}).then(function() {
+			gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
+			updateSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+			});
+			}
+
+			function handleClientLoad() {
+			gapi.load('client:auth2', initClient);
+			}
+
+			function updateSignInStatus(isSignedIn) {
+			//changed to allow access to data when not signed in to Google
+			if (isSignedIn) {
+			makeApiCall();
+			}
+			else {
+			console.log("NOT SIGNED IN");
+			makeApiCall();
+			}
+			}
+
+			function handleSignInClick(event) {
+			gapi.auth2.getAuthInstance().signIn();
+			}
+
+			function handleSignOutClick(event) {
+			gapi.auth2.getAuthInstance().signOut();
+			}
+		</script>
+		<script async defer src="https://apis.google.com/js/api.js"
+				onload="this.onload=function(){};handleClientLoad()"
+				onreadystatechange="if (this.readyState === 'complete') this.onload()">
+		</script>
+		
+		<script>
+			const LIN_REG_VALS_ID = "#linearRegVals";               
+		
+			//global variable to see whether or not table has been previously built (do we need to build a header?)
+			var click = 0;
+			//global variable for keeping track of first month in table header
+			var headerBegin =0;
+
+
+			//this function builds the dropdown menu for the subcategories
+
+			function buildDropdown() {
+			if(document.getElementById("sheetNames").value == "label") return;
+			var sheetName = document.getElementById("sheetNames").value;
+			var categories = globalResponse.result.valueRanges[sheetName].values;
+			// the name "categories" is a little misleading, think of it as a single spreadsheet
+			// categories will be all the data on an entire sheet, chosen through "sheetName" which would be "Vital Statistics", "Public Health Outreach", etc.
+			// categories[row][column] is how you can extract data from the sheet, iterating through it with for loops
+			var div = document.getElementById("categoryForm");
+
+			//remove old dropdown
+			document.getElementById("categoriesBuild").remove();
+
+			//create new dropdown
+			var form = document.createElement("select");
+
+			form.id = "categoriesBuild";
+
+			//set function to build subCategories dropdown and set the label option to disabled 
+			form.onchange = function(){dropOnchange();};
+			//create label option
+			var label = document.createElement("option");
+			label.value = 'label';
+			label.id = 'dropLabel';
+			label.textContent = "Select a Category";
+
+			form.appendChild(label);
+			div.appendChild(form);
+
+			//set dropdown list
+			for(var i=1; i<categories.length; i++) {
+					var temp = document.createElement("option");
+					// categories[i][0] will iterate through the leftmost or 'A' column on the spreadsheet
+
+					//temp.textContent = textContent;
+					//temp.textContent = categories[i][0];
+					temp.value = i;
+					if (isGroupVar(categories[i][0])) {
+					var textContent = getStringWithinChar(categories[i][0], '*');
+					//console.log( i + textContent);
+					temp.textContent = textContent;
+					form.appendChild(temp);
+					}
+
+					}
+					//builds subCategories dropdown at the end of call
+					buildSubDropdown();
+
+					}
+
+					//build dropdown for subcategories
+					function buildSubDropdown() {
+					if(document.getElementById("categoriesBuild").value == "label") return;
+					var sheetName = document.getElementById("sheetNames").value;
+					// categories is the full sheet, but used for getting the categories
+					var categories = globalResponse.result.valueRanges[sheetName].values;
+					var div = document.getElementById("subCategoryForm");
+					//remove old dropdown
+					document.getElementById("subCategoriesBuild").remove();
+
+					var subForm = document.createElement("select");
+					subForm.id = "subCategoriesBuild";
+					//subForm.textContent = "Select a Subcategory";
+					subForm.onchange = function(){disableLabel();};
+					div.appendChild(subForm);
+
+					//row of overarching category
+					var index = document.getElementById("categoriesBuild").value;
+
+					//set label to disable selected
+					var label = document.createElement("option");
+					label.value = 'label';
+					label.id = 'subLabel';
+					label.textContent = "Select a Variable";
+
+					subForm.appendChild(label);
+
+
+					var temp = document.createElement("option");
+					//get rid of asterisks surrounding string
+					temp.textContent = getStringWithinChar(categories[index][0], '*');
+					temp.value = +index;
+
+					subForm.appendChild(temp);
+
+					for (var i=(+index+1); i<categories.length; i++) {
+							//if not a groupVar, add to subcategories dropdown
+							if (isGroupVar(categories[i][0]) == false) {
+
+
+
+							var temp = document.createElement("option");
+							//if its a Linked Var, add in category it applies to for clarity
+							if(isLinkedVar(categories[i][0])) {
+							temp.textContent = (findCategoryName(i) + ": " + (getStringWithinChar(categories[i][0], '-')));
+							}
+							else temp.textContent = categories[i][0];
+
+							temp.value = i;
+							subForm.appendChild(temp);
+
+							}
+							else return;
+							}
+
+
+							}
+							
+							
+							function buildDropdownSecondary() {
+			if(document.getElementById("sheetNamesSecondary").value == "labelSecondary") return;
+			var sheetName = document.getElementById("sheetNamesSecondary").value;
+			var categories = globalResponse.result.valueRanges[sheetName].values;
+			// the name "categories" is a little misleading, think of it as a single spreadsheet
+			// categories will be all the data on an entire sheet, chosen through "sheetName" which would be "Vital Statistics", "Public Health Outreach", etc.
+			// categories[row][column] is how you can extract data from the sheet, iterating through it with for loops
+			var div = document.getElementById("categoryFormSecondary");
+
+			//remove old dropdown
+			document.getElementById("categoriesBuildSecondary").remove();
+
+			//create new dropdown
+			var form = document.createElement("select");
+
+			form.id = "categoriesBuildSecondary";
+
+			//set function to build subCategories dropdown and set the label option to disabled 
+			form.onchange = function(){dropOnchangeSecondary();};
+			//create label option
+			var label = document.createElement("option");
+			label.value = 'label';
+			label.id = 'dropLabelSecondary';
+			label.textContent = "Select a Category";
+
+			form.appendChild(label);
+			div.appendChild(form);
+
+			//set dropdown list
+			for(var i=1; i<categories.length; i++) {
+					var temp = document.createElement("option");
+					// categories[i][0] will iterate through the leftmost or 'A' column on the spreadsheet
+
+					//temp.textContent = textContent;
+					//temp.textContent = categories[i][0];
+					temp.value = i;
+					if (isGroupVar(categories[i][0])) {
+					var textContent = getStringWithinChar(categories[i][0], '*');
+					//console.log( i + textContent);
+					temp.textContent = textContent;
+					form.appendChild(temp);
+					}
+
+					}
+					//builds subCategories dropdown at the end of call
+					buildSubDropdownSecondary();
+
+					}
+
+					//build dropdown for subcategories
+					function buildSubDropdownSecondary() {
+					if(document.getElementById("categoriesBuildSecondary").value == "label") return;
+					var sheetName = document.getElementById("sheetNamesSecondary").value;
+					// categories is the full sheet, but used for getting the categories
+					var categories = globalResponse.result.valueRanges[sheetName].values;
+					var div = document.getElementById("subCategoryFormSecondary");
+					//remove old dropdown
+					document.getElementById("subCategoriesBuildSecondary").remove();
+
+					var subForm = document.createElement("select");
+					subForm.id = "subCategoriesBuildSecondary";
+					//subForm.textContent = "Select a Subcategory";
+					subForm.onchange = function(){disableLabelSecondary();};
+					div.appendChild(subForm);
+
+					//row of overarching category
+					var index = document.getElementById("categoriesBuildSecondary").value;
+
+					//set label to disable selected
+					var label = document.createElement("option");
+					label.value = 'label';
+					label.id = 'subLabelSecondary';
+					label.textContent = "Select a Variable";
+
+					subForm.appendChild(label);
+
+
+					var temp = document.createElement("option");
+					//get rid of asterisks surrounding string
+					temp.textContent = getStringWithinChar(categories[index][0], '*');
+					temp.value = +index;
+
+					subForm.appendChild(temp);
+
+					for (var i=(+index+1); i<categories.length; i++) {
+							//if not a groupVar, add to subcategories dropdown
+							if (isGroupVar(categories[i][0]) == false) {
+
+
+
+							var temp = document.createElement("option");
+							//if its a Linked Var, add in category it applies to for clarity
+							if(isLinkedVar(categories[i][0])) {
+							temp.textContent = (findCategoryName(i) + ": " + (getStringWithinChar(categories[i][0], '-')));
+							}
+							else temp.textContent = categories[i][0];
+
+							temp.value = i;
+							subForm.appendChild(temp);
+
+							}
+							else return;
+							}
+
+
+							}
+
+							function buildTable() {
+							if(document.getElementById("subCategoriesBuild").value == "label") return;
+							if (document.getElementById("beginDate").value > document.getElementById("endDate").value) {
+							alert("Invalid Date Range");
+							return;
+							}
+							//if header hasn't already been built, build it
+							if(click == 0) {
+							buildHeader();
+							}
+							//if header range is different than selected months, rebuild it
+							if (((document.getElementById("beginDate").value < headerBegin) && click == 1) 
+									|| ((document.getElementById("endDate").value > headerEnd) && click == 1)) {
+								removeHeader();
+								buildHeader();
+								}
+								//set click to 1 to show the header has been built
+								click = 1;
+								var beginDate = document.getElementById("beginDate").value;
+								var endDate = document.getElementById("endDate").value;
+
+								var sheetName = document.getElementById("sheetNames").value;
+								var row = document.getElementById("subCategoriesBuild").value;
+
+								var currentSheet = globalResponse.result.valueRanges[sheetName].values;
+
+								//table which data will be added to
+								var dataTable = document.getElementById("dataTable");
+
+								var newRow = dataTable.insertRow(-1);
+								var newCell = newRow.insertCell(-1);
+
+								//remove markers for groupVar and linkedVar for adding them to first column of table
+								if (isGroupVar(currentSheet[row][0])) {
+								var textContent = getStringWithinChar(currentSheet[row][0], '*');
+								newCell.appendChild(document.createTextNode(textContent));
+								}
+								else if (isLinkedVar(currentSheet[row][0])) {
+
+								var textContent = (findCategoryName(document.getElementById("subCategoriesBuild").value) + ": " + getStringWithinChar(currentSheet[row][0], '-'));
+								newCell.appendChild(document.createTextNode(textContent));
+								}
+								else {
+								var textContent = currentSheet[row][0];
+								newCell.appendChild(document.createTextNode(textContent));
+								}
+								//add values to table associated with category
+								for (var column=1; column<=endDate; column++) {
+										if (column <beginDate) {
+												var newCell = newRow.insertCell(-1);
+												}
+												else {
+
+												var newCell = newRow.insertCell(-1);
+												var textContent = currentSheet[row][column];
+												//if the value is undefined, display N/A
+												if (textContent == null) {
+												textContent = "N/A";
+												}
+												newCell.appendChild(document.createTextNode(textContent));
+												}
+												}
+												}
+
+
+												function removeHeader() {
+												document.getElementById("headerRow").remove();
+												}
+
+												function buildHeader() {
+												var sheetName = document.getElementById("sheetNames").value;
+												var beginDate = document.getElementById("beginDate").value;
+												var endDate = document.getElementById("endDate").value;
+												var currentSheet = globalResponse.result.valueRanges[sheetName].values;
+												var dataTable = document.getElementById("dataTable");
+												//set new headerBegin
+												if (headerBegin > beginDate) {
+											headerBegin = beginDate;
+											}
+											headerEnd = endDate;
+											var header = dataTable.createTHead();
+											header.id = "header";
+											var row = header.insertRow(0);
+											row.id = "headerRow";
+											var newCell = row.insertCell(-1);
+											newCell.appendChild(document.createTextNode("Categories"));
+											for (var i=1; i<=endDate; i++) {
+
+													var newCell = row.insertCell(-1);
+													newCell.id = "header"+i;
+													newCell.appendChild(document.createTextNode(currentSheet[0][i]));
+													}
+													}
+													//build dropdown of month ranges
+													function monthDropdown() {
+													var sheetName = document.getElementById("sheetNames").value;
+
+													var months = globalResponse.result.valueRanges[0].values;
+
+													var beginDate = document.getElementById("beginDate");
+													var endDate = document.getElementById("endDate");
+			
+
+													for(var i=1; i<months[0].length; i++) {
+															var temp = document.createElement("option");
+															temp.textContent = months[0][i];
+															temp.value = i;
+															var temp2= temp.cloneNode(true);
+															beginDate.appendChild(temp2);
+															endDate.appendChild(temp);
+															}
+															}
+
+															//disable the label option when selected
+															function disableLabel() {
+
+															document.getElementById("subLabel").disabled = true;
+															}
+															
+															function disableLabelSecondary() {
+															document.getElementById("subLabelSecondary").disabled = true;
+															}
+															//onchange function set to categoriesBuild
+															function dropOnchange() {
+															document.getElementById("dropLabel").disabled = true;
+															buildSubDropdown();
+															}
+															
+															function dropOnchangeSecondary() {
+															document.getElementById("dropLabelSecondary").disabled = true;
+															buildSubDropdownSecondary();
+															}
+															//find category which corresponds to a linked var
+															function findCategoryName(row) {
+															var currentSheet = document.getElementById("sheetNames").value;
+															//var row = document.getElementById("subCategoriesBuild").value;
+															var categories = globalResponse.result.valueRanges[currentSheet].values;
+															while (isLinkedVar(categories[row][0]) == true) {
+															row--;
+															}
+															var headCategory = categories[row][0];
+															if (isGroupVar(headCategory)) {
+															headCategory = getStringWithinChar(headCategory, '*');
+															}
+															return headCategory;
+															}
+
+															//get the string within the markers for groupVar or linkedVar															
+															function getStringWithinChar(source, c) {
+															var startingIndex = source.indexOf(c) + 1;	
+															var lastIndexOfChar = source.lastIndexOf(c);
+
+															//grab the string between the character (starting at the start, with a length of end - start)
+															var test = source.substr(startingIndex, lastIndexOfChar - startingIndex);
+
+															//trim the string if we can (don't get a null exception)
+															if(test.length > 0)
+														//console.log(test.trim(););
+														return test.trim();
+														else
+														return test;
+														}
+
+														function isLinkedVar(cell) {
+														if(cell.length > 0) {
+														if(cell[0] == '-') {
+														return true;
+														}
+														}
+
+														return false;
+														}
+
+														function isGroupVar(cell) {
+														if(cell.length > 0) {
+														if(cell[0] == '*') {
+														return true;
+														}
+														}
+
+														return false;
+														}
+														
+														
+													
+	//Statistics Functions
+	// Just throw in a line of data (like var elmt = [1,4,67,3]), and you'll get the sum, average, or standard deviation
+function sum() {
+var beginDate = document.getElementById("beginDate").value;
+var endDate = document.getElementById("endDate").value;
+var sheetName = document.getElementById("sheetNames").value;
+var variable = document.getElementById("subCategoriesBuild").value;
+var elmt =[];
+for (var i=beginDate; i<= endDate; i++) {
+elmt.push(globalResponse.result.valueRanges[sheetName].values[variable][i]);
+}
+  var sum = 0;
+  for( var i = 0; i < elmt.length; i++ ){
+      sum += parseFloat( elmt[i], 10 );
+  }
+  alert("Sum: " + sum);
+  return sum;
+  var avg = sum/elmt.length;
+}
+
+function avg() {
+var beginDate = document.getElementById("beginDate").value;
+var endDate = document.getElementById("endDate").value;
+var sheetName = document.getElementById("sheetNames").value;
+var variable = document.getElementById("subCategoriesBuild").value;
+var elmt =[];
+for (var i=beginDate; i<= endDate; i++) {
+elmt.push(globalResponse.result.valueRanges[sheetName].values[variable][i]);
+}
+  var sum = 0;
+  for( var i = 0; i < elmt.length; i++ ){
+      sum += parseFloat( elmt[i], 10 );
+  }
+  var avg = sum/elmt.length;
+  alert("Average: " + avg);
+  return avg;
+}
+
+function sd() {
+var beginDate = document.getElementById("beginDate").value;
+var endDate = document.getElementById("endDate").value;
+var sheetName = document.getElementById("sheetNames").value;
+var variable = document.getElementById("subCategoriesBuild").value;
+var elmt =[];
+for (var i=beginDate; i<= endDate; i++) {
+elmt.push(globalResponse.result.valueRanges[sheetName].values[variable][i]);
+}
+  var sum = 0;
+  for( var i = 0; i < elmt.length; i++ ){
+      sum += parseFloat( elmt[i], 10 );
+  }
+  var avg = sum/elmt.length;
+  
+  var SDprep = 0;
+  for( var j = 0; j < elmt.length; j++ ) 
+     SDprep += Math.pow((parseFloat(elmt[j]) - avg),2)
+  var SDresult = Math.sqrt(SDprep/(elmt.length - 1));
+  alert("Standard Deviation: " + SDresult);
+  return(SDresult);
+}
+
+
+// Now throw in two lines of data, and this is throw back a list with variables 'Slope', 'Intercept', 'R^2', and the allmighty 'P-value'
+function linearRegression(){
+var beginDate = document.getElementById("beginDate").value;
+var endDate = document.getElementById("endDate").value;
+var sheetName = document.getElementById("sheetNames").value;
+var sheetNameSecondary = document.getElementById("sheetNamesSecondary").value;
+var variable = document.getElementById("subCategoriesBuild").value;
+var variableSecondary = document.getElementById("subCategoriesBuildSecondary").value;
+var x =[];
+var y =[];
+for (var i=beginDate; i<= endDate; i++) {
+x.push(+globalResponse.result.valueRanges[sheetName].values[variable][i]);
+y.push(+globalResponse.result.valueRanges[sheetNameSecondary].values[variableSecondary][i]);
+}
+
+console.log("x: " + x);
+console.log("y: " + y);
+		var lr = {};
+        var n = y.length;
+        var sum_x = 0;
+        var sum_y = 0;
+        var sum_xy = 0;
+        var sum_xx = 0;
+        var sum_yy = 0;
+
+        // Checking pre-conditions (x and y are of same length, if they have no values doesn't do anything)
+        if (x.length != y.length) {
+            console.error('The parameters values_x and values_y need to have same size!');
+            return -1;
+        }
+        if (n === 0) {
+            lr['Slope'] = [];
+            lr['Intercept'] = [];
+            lr['R^2'] = [];
+            lr['P-value'] = [];
+            return lr;
+        }
+  
+        // Now into calculating slope, intercept, & R^2
+        
+        for (var i = 0; i < y.length; i++) {
+            sum_x += x[i];
+            sum_y += y[i];
+            sum_xy += (x[i]*y[i]);
+            sum_xx += (x[i]*x[i]);
+            sum_yy += (y[i]*y[i]);
+        } 
+
+        lr['Slope'] = ((n * sum_xy) - (sum_x * sum_y)) / ((n*sum_xx) - (sum_x * sum_x));
+        lr['Intercept'] = (sum_y - (lr['Slope'] * sum_x))/n;
+		console.log("Intercept Equation Result: " + ((sum_y - lr['Slope'] * sum_x)/n))
+        lr['R^2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
+  
+        // Predicted values
+  
+        var tempX = 0;
+        var tempY = 0;
+        var result_values_x = [];
+        var result_values_y = [];
+
+        for (var i = 0; i < y.length; i++) {
+            tempX = x[i];
+            tempY = tempX * lr['Slope'] + lr['Intercept'];
+            result_values_x.push(tempX);
+            result_values_y.push(tempY);
+        }
+
+        // Standard Error + p-value
+  
+        var residualSumY = 0
+        var residualSumX = 0
+        tempX = x;
+        tempY = y;
+        
+        
+        for (var i = 0; i < y.length; i++) {
+            residualSumY = residualSumY + Math.pow(tempY[i] - result_values_y[i],2);
+            residualSumX = residualSumX + Math.pow(tempX[i] - result_values_x[i],2);
+        }
+        var standardError
+        standardError = Math.pow(residualSumY/(n-2), 0.5)
+  
+        lr['P-value'] = tprob(n, lr['Slope'] / standardError);
+
+  
+        return lr;
+}
+
+function outputLineRegVals() {
+	var sheetName = document.getElementById("sheetNames").value;
+	var categories = globalResponse.result.valueRanges[sheetName].values;
+	var firstVar;
+	var secondVar;
+	
+	if (isGroupVar(categories[document.getElementById("subCategoriesBuild").value][0]) == true) {
+	console.log("GROUP VAR");
+	firstVar = getStringWithinChar(categories[document.getElementById("subCategoriesBuild").value][0], '*');
+	}
+	else if (isLinkedVar(categories[document.getElementById("subCategoriesBuild").value][0]) == true) {
+	firstVar = getStringWithinChar(categories[document.getElementById("subCategoriesBuild").value][0], '-');
+	}
+	else firstVar = categories[document.getElementById("subCategoriesBuild").value][0];
+	
+	if (isGroupVar(categories[document.getElementById("subCategoriesBuildSecondary").value][0]) == true) {
+	secondVar = getStringWithinChar(categories[document.getElementById("subCategoriesBuildSecondary").value][0], '*');
+	}
+	else if (isLinkedVar(categories[document.getElementById("subCategoriesBuildSecondary").value][0]) == true) {
+	secondVar = getStringWithinChar(categories[document.getElementById("subCategoriesBuildSecondary").value][0], '-');
+	}
+	else secondVar = categories[document.getElementById("subCategoriesBuildSecondary").value][0];
+	
+	var vals = linearRegression();
+	$(LIN_REG_VALS_ID).append("Linear Regression: " + firstVar + " and " + secondVar);
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("Slope: " + vals['Slope'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("Intercept: " + vals['Intercept'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("R^2: " + vals['R^2'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("P-value: " + vals['P-value'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("<br />");
+}
+
+function outputLineRegTimeVals() {
+	var vals = linearRegressionTime();
+var sheetName = document.getElementById("sheetNames").value;
+	var categories = globalResponse.result.valueRanges[sheetName].values;
+	var firstVar;
+
+	if (isGroupVar(categories[document.getElementById("subCategoriesBuild").value][0]) == true) {
+	console.log("GROUP VAR");
+	firstVar = getStringWithinChar(categories[document.getElementById("subCategoriesBuild").value][0], '*');
+	}
+	else if (isLinkedVar(categories[document.getElementById("subCategoriesBuild").value][0]) == true) {
+	firstVar = getStringWithinChar(categories[document.getElementById("subCategoriesBuild").value][0], '-');
+	}
+	else firstVar = categories[document.getElementById("subCategoriesBuild").value][0];
+	
+	$(LIN_REG_VALS_ID).append("Linear Regression: " + firstVar + " and Time");
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("Slope: " + vals['Slope'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("Intercept: " + vals['Intercept'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("R^2: " + vals['R^2'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("P-value: " + vals['P-value'].toFixed(3));
+	$(LIN_REG_VALS_ID).append("<br />");
+	$(LIN_REG_VALS_ID).append("<br />");
+}
+
+function tprob (n, x) {
+	if ((n <= 0) || ((Math.abs(n) - Math.abs(parseInt(n))) !=0)) {
+		console.error("Invalid n: n\n"); /* degree of freedom */
+      return NULL;
+	}
+	return _subtprob(n-0, x-0);
+}
+
+function _subtprob (n, x) {
+	var a;
+    var b;
+	var w = Math.atan2(x / Math.sqrt(n), 1);
+	var z = Math.pow(Math.cos(w), 2);
+	var y = 1;
+	for (var i = n-2; i >= 2; i -= 2) {
+		y = 1 + (i-1) / i * z * y;
+	}
+
+	if (n % 2 == 0) {
+		a = Math.sin(w)/2;
+		b = .5;
+	} else {
+		a = (n == 1) ? 0 : Math.sin(w)*Math.cos(w)/Math.PI;
+		b= .5 + w/Math.PI;
+	}
+	return Math.max(0, 1 - b - a * y);
+}
+
+function linearRegressionTime(){
+var beginDate = document.getElementById("beginDate").value;
+var endDate = document.getElementById("endDate").value;
+var sheetName = document.getElementById("sheetNames").value;
+var variable = document.getElementById("subCategoriesBuild").value;
+var x =[];
+var y =[];
+for (var i=beginDate; i<= endDate; i++) {
+x.push(+globalResponse.result.valueRanges[sheetName].values[variable][i]);
+y.push(i-beginDate);
+}
+
+console.log("x: " + x);
+console.log("y: " + y);
+		var lr = {};
+        var n = y.length;
+        var sum_x = 0;
+        var sum_y = 0;
+        var sum_xy = 0;
+        var sum_xx = 0;
+        var sum_yy = 0;
+
+        // Checking pre-conditions (x and y are of same length, if they have no values doesn't do anything)
+        if (x.length != y.length) {
+            console.error('The parameters values_x and values_y need to have same size!');
+            return -1;
+        }
+        if (n === 0) {
+            lr['Slope'] = [];
+            lr['Intercept'] = [];
+            lr['R^2'] = [];
+            lr['P-value'] = [];
+            return lr;
+        }
+  
+        // Now into calculating slope, intercept, & R^2
+        
+        for (var i = 0; i < y.length; i++) {
+            sum_x += x[i];
+            sum_y += y[i];
+            sum_xy += (x[i]*y[i]);
+            sum_xx += (x[i]*x[i]);
+            sum_yy += (y[i]*y[i]);
+        } 
+
+        lr['Slope'] = ((n * sum_xy) - (sum_x * sum_y)) / ((n*sum_xx) - (sum_x * sum_x));
+        lr['Intercept'] = (sum_y - (lr['Slope'] * sum_x))/n;
+		console.log("Intercept Equation Result: " + ((sum_y - lr['Slope'] * sum_x)/n))
+        lr['R^2'] = Math.pow((n*sum_xy - sum_x*sum_y)/Math.sqrt((n*sum_xx-sum_x*sum_x)*(n*sum_yy-sum_y*sum_y)),2);
+  
+        // Predicted values
+  
+        var tempX = 0;
+        var tempY = 0;
+        var result_values_x = [];
+        var result_values_y = [];
+
+        for (var i = 0; i < y.length; i++) {
+            tempX = x[i];
+            tempY = tempX * lr['Slope'] + lr['Intercept'];
+            result_values_x.push(tempX);
+            result_values_y.push(tempY);
+        }
+
+        // Standard Error + p-value
+  
+        var residualSumY = 0
+        var residualSumX = 0
+        tempX = x;
+        tempY = y;
+        
+        
+        for (var i = 0; i < y.length; i++) {
+            residualSumY = residualSumY + Math.pow(tempY[i] - result_values_y[i],2);
+            residualSumX = residualSumX + Math.pow(tempX[i] - result_values_x[i],2);
+        }
+        var standardError
+        standardError = Math.pow(residualSumY/(n-2), 0.5)
+  
+        lr['P-value'] = tprob(n, lr['Slope'] / standardError);
+
+  
+        return lr;
+}
+
+
+
+
+//Charts script
+var barChartData;
+
+		window.onload = function() {
+		hideChart();
+			var ctx = document.getElementById('canvas').getContext('2d');
+			window.myBar = new Chart(ctx, {
+				type: 'bar',
+				data: barChartData,
+				options: {
+					responsive: true,
+					legend: {
+						position: 'top',
+					},
+					title: {
+						display: true,
+						text: 'Chart.js Bar Chart'
+					}
+				}
+			});
+
+		};
+
+		var colorNames = Object.keys(window.chartColors);
+		
+		function updateChart() {
+			if(window.myBar != undefined) {
+				window.myBar.update();
+			}
+		}
+		
+		function buildChart() {
+		var sheetName = document.getElementById("sheetNames").value;
+		var categories = globalResponse.result.valueRanges[sheetName].values;
+		var variable = document.getElementById("subCategoriesBuild").value;
+			var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+			var monthNum = -1;
+			startDate = $("#beginDate").children(":selected").text();
+			
+			for (var i=0; i<months.length; i++) {
+				if(startDate.substring(0,3) == months[i]) {
+					monthNum = i+1;
+				}
+			}
+			var year = startDate.substring(startDate.length - 4);
+			if (monthNum < 0) {
+				monthNum = 1;
+				year = startDate.substring(0, 4);
+			}
+			beginDate = document.getElementById("beginDate").value;
+			endDate = document.getElementById("endDate").value;
+			var values = [];
+			for ( var i = beginDate; i <= endDate; i++) {
+				var index = +i+parseInt((i-1)/12);
+				console.log("index: " + index);
+				console.log("i: " + i);
+				values.push(categories[variable][index]);
+			
+			}
+			var label = $("#subCategoriesBuild").children(":selected").text();
+			displayChart(monthNum, parseInt(year), values, label);
+			
+		}
+													</script>
+													
+													
+    
+
+
+</head>
+
+<body  class="  header-overlay-light main-bg-overlay-light main-template-with-shadow main-body-light footer-overlay-light bottom-type-none font-family-trebuchet font-size-is-default menu-type-dropdownmenu menu-dropdownmenu-position-header-b layout-mode-responsive col12 option-com-content menu-home ">
+<div id="rt-page-surround">
+	<div id="rt-page-surround-bottom">
+		<div class="rt-with-footer">
+			<div id="rt-drawer">
+				<div class="rt-container">
+					<div class="clear"></div>
+				</div>
+			</div>
+			<div id="rt-top">
+				<div class="rt-container">
+					<div class="rt-grid-3 rt-alpha">
+						<div class="rt-block nopaddingall nomarginall">
+							<div class="module-surround">
+								<div class="module-content">
+								
+								
+									<div class="customnopaddingall nomarginall"  >
+										<p>
+											<a title="Knox County Ohio Health Department" href="http://www.knoxhealth.com/">
+												<img title="Knox County Health Department: We Are Public Health" src="https://cslab.kenyon.edu/class/ssd/khanm/KCHD2.png" width="250" />
+											</a>
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					
+						<div class="rt-grid-3 rt-omega">
+							<div class="rt-block nopaddingall nomarginall">
+								<div class="module-surround">
+									<div class="module-content"></div>
+								</div>
+							</div>
+							<div class="custom"  >
+								<p style="text-align: left;">
+								</p>
+							</div>
+							<div class="clear"></div>
+						</div>
+					</div>
+					<div id="rt-header">
+						<div class="rt-container">
+							<div class="rt-grid-12 rt-alpha rt-omega">
+								<div class="rt-block menu-block">
+									<div class="gf-menu-device-container responsive-type-panel"></div>
+									<ul class="gf-menu l1 " >
+										<li class="item101 active last" >
+											<a class="item icon" href="https://cslab.kenyon.edu/class/ssd/khanm/Public.html"  >
+												<span class="icon-home">Home</span>
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</li>
+					</ul>
+					<div class="clear"></div>
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	</div>
+	<div id="rt-transition">
+		<div id="rt-body-surround">
+			<div id="rt-showcase">
+				<div class="rt-container">
+					<div class="rt-grid-12 rt-alpha rt-omega">
+						<div class="rt-block nomarginall nopaddingall">
+							<div class="module-surround">
+								<div class="module-content">
+								
+								<br></br>
+									<center>
+									
+									<!-- Dropdown for Sheets, onchange will begin building dropdown of categories -->
+		<form id="pageSelect">
+			<select id="sheetNames" onchange="buildDropdown();">
+				<option value="label" disabled selected>Select Category</option>
+				<option value=0>Vital Statistics</option>
+				<option value=1>Public Health Outreach</option>
+				<option value=2>Immunizations</option>
+				<option value=3>Environmental Health</option>
+				<option value=4>Planning, Education, Promotion</option>
+				<option value=5>WIC</option>
+				<option value=6>BCMH</option>
+				<option value=7>Benefit Bank</option>
+				<option value=8>Health Center</option>
+			</select>
+		</form>
+
+		<!-- Dropdown for month ranges -->
+		<form id="dateRanges">
+			<select id="beginDate">
+			</select>
+			<select id="endDate">
+			</select>
+		</form>
+
+		<!-- Dropdowns for categories and subcategories, onchange for categoriesBuild will build the subcategory dropdown -->
+		<!-- disableLabel makes the label option unselectable-->
+	<form id="categoryForm">
+			<select id="categoriesBuild" onchange="buildSubDropdown()" onclick="disableLabel(document.getElementById('dropLabel')">
+			</select>
+		</form>
+		
+		<form id="subCategoryForm">
+			<select id="subCategoriesBuild" onchange="disableLabel(document.getElementById('subLabel')">
+			</select>
+		</form>
+
+		<!-- Button to build table of data --->
+		
+		<button onclick="buildChart();">Build Chart</button>
+		<button onclick="sum();">Sum</button>
+		<button onclick="avg();">Average</button>
+		<button onclick="sd();">Standard Deviation</button>
+		<button onclick="outputLineRegTimeVals();">Trends over Time</button>
+
+<br></br>
+<h3> Please use the Secondary drop-down if you wish to do a Linear Regression.</h3>
+		<form id="pageSelectSecondary">
+			<select id="sheetNamesSecondary" onchange="buildDropdownSecondary();">
+				<option value="labelSecondary" disabled selected>Select a Category</option>
+				<option value=0>Vital Statistics</option>
+				<option value=1>Public Health Outreach</option>
+				<option value=2>Immunizations</option>
+				<option value=3>Environmental Health</option>
+				<option value=4>Planning, Education, Promotion</option>
+				<option value=5>WIC</option>
+				<option value=6>BCMH</option>
+				<option value=7>Benefit Bank</option>
+				<option value=8>Health Center</option>
+			</select>
+		</form>
+
+
+		<!-- Dropdowns for categories and subcategories, onchange for categoriesBuild will build the subcategory dropdown -->
+		<!-- disableLabel makes the label option unselectable-->
+	
+	
+	
+	<form id="categoryFormSecondary">
+			<select id="categoriesBuildSecondary" onchange="buildSubDropdownSecondary()" onclick="disableLabelSecondary(document.getElementById('dropLabelSecondary)">
+			</select>
+		</form>
+		
+		<form id="subCategoryFormSecondary">
+			<select id="subCategoriesBuildSecondary" onchange="disableLabelSecondary(document.getElementById('subLabelSecondary')">
+			</select>
+		</form>
+		<button onclick="outputLineRegVals();">Linear Regression</button>
+		
+		<div id="linearRegVals">
+		
+		</div>
+
+		<table style="width:20%" id=dataTable border=2>
+
+		</table>
+
+		<div id="chartContainer" style="width: 75%;">
+		<canvas id="canvas"></canvas>
+	</div>
+	
+	</center>
+								
+									<div class="customnomarginall nopaddingall">
+										<h1 style="text-align: center;">
+											<img src="https://cslab.kenyon.edu/class/ssd/khanm/KCHD1.png" alt="Knox County Health Department | Mount Vernon, Ohio">
+										</h1>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div id="rt-footer-surround">
+							<div class="rt-container">
+								<div id="rt-footer">
+									<div class="rt-grid-4 rt-alpha">
+										<div class="rt-block fp-footer-a rt-center">
+											<div class="module-surround">
+												<div class="module-title">
+													<h2 class="title">We Are Public Health</h2>
+												</div>
+												<div class="module-content">
+													<div class="customfp-footer-a rt-center">
+														<p style="text-align: left;">
+															<img style="display: block; margin-left: auto; margin-right: auto;" title="Public Health: prevent. promote. protect" src="https://cslab.kenyon.edu/class/ssd/khanm/KCHD3.png" alt="Public Health: prevent. promote. protect" width="150">
+														</p>
+														<p style="text-align: left;">Public Health is about focused community efforts to prevent disease, promote healthy lifestyles and protect the environment.  It is what we do with our community partners to ensure conditions that support the health and well-being of our residents.</p>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="rt-block ">
+											<div class="module-surround">
+												<div class="module-content">
+													<div class="custom">
+														<div id="google_translate_element">						
+														</span></a></span>
+														</div>
+														</div>
+														</div>
+														<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+}
+</script>
+														<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="rt-grid-4">
+										<div class="rt-block fp-footer-b">
+											<div class="module-surround">
+												<div class="module-title">
+													<h2 class="title">Find Us on Facebook</h2>
+												</div>
+												<div class="module-content">
+													<div class="customfp-footer-b">
+														<iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fknoxhealth&amp;tabs=timeline&amp;width=340&amp;height=340&amp;small_header=false&amp;adapt_container_width=true&amp;hide_cover=false&amp;show_facepile=true&amp;appId" width="340" height="340" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowtransparency="true"></iframe>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="rt-grid-4 rt-omega">
+										<div class="rt-block fp-footer-c ">
+											<div class="module-surround">
+												<div class="module-title">
+													<h2 class="title">Contact Us</h2>
+												</div>
+												<div class="module-content">
+													<div class="customfp-footer-c ">
+														<p>
+															<strong>Monday-Friday 8:00am - 4:30pm</strong>
+															<br>Evening hours - open every third Tuesday of every month until 6pm
+														</p>
+														<p>
+															<strong>Phone:</strong> 740-392-2200&nbsp; 
+															<strong>Fax:</strong> 740-392-9613
+														</p>
+														<h5>For public health emergencies during non-business hours, call 740-397-3333, Opt. #1</h5>
+														<p>
+															<a href="http://www.knoxhealth.com/index.php/contact">Directions | Call | Email | Fax</a>
+														</p>
+														<p>
+															<strong>11660 Upper Gilchrist Road</strong>
+															<br>
+															<strong>Mount Vernon, Ohio 43050</strong>
+														</p>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="clear"></div>
+								</div>
+							</div>
+						</div>
+						<div id="rt-copyright">
+							<div class="rt-container">
+								<div class="rt-grid-12 rt-alpha rt-omega">
+									<div class="clear"></div>
+									<div class="rt-block">
+		</div>
+									<div class="clear"></div>
+									<div class="rt-totop">
+										<a href="#" id="gantry-totop" rel="nofollow"></a>
+									</div>
+								</div>
+								<div class="clear"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+		
+	
+</div></div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>		<!-- For Jquery -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+	<script src="https://cslab.kenyon.edu/class/ssd/khanm/chartUtils.js"></script>
+	<script src="https://cslab.kenyon.edu/class/ssd/khanm/charts.js"></script> 
+	</body>
+	</html>
+
