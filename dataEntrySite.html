@@ -1,0 +1,164 @@
+<html>
+  <head></head>
+  <body>
+    <!--
+    BEFORE RUNNING:
+    ---------------
+    1. If not already done, enable the Google Sheets API
+       and check the quota for your project at
+       https://console.developers.google.com/apis/api/sheets
+    2. Get access keys for your application. See
+       https://developers.google.com/api-client-library/javascript/start/start-js#get-access-keys-for-your-application
+    3. For additional information on authentication, see
+       https://developers.google.com/sheets/api/quickstart/js#step_2_set_up_the_sample
+    -->
+    <script>	
+	//CLIENT SECRET: VDt15cGJGGN_IgJDpMh5jyUW
+	const SPREADSHEET_ID = '1KJRexOP9Sv8PVV73UFLpJn9rk4_Jz-2tpSOmP4cCptI';	//NEW: 1Ja-ALUFLHb7Llx5Nf0yeOlyTLuqVhX72irRGGVWmrSM
+	const API_KEY = 'AIzaSyCb4rjgLexE-ZIpGIyr31WuV1_5eReGFw8';  			//NEW: AIzaSyBccMlr870nVuLA3NoBiH-_Qzh-nMVskbc
+	const CLIENT_ID = '479039470314-6odcf1ildjrn8eb5jufovkuc3ktmpbp2.apps.googleusercontent.com';  // NEW: 15421780877-bdq0gup6cv50fdaalpec8ct2n96bkhgm.apps.googleusercontent.com
+	const VALUE_INPUT_OPTION = 'USER_ENTERED';
+	
+	<!-- const SPREADSHEET_ID = '1Ja-ALUFLHb7Llx5Nf0yeOlyTLuqVhX72irRGGVWmrSM'; -->
+	<!-- const API_KEY = 'AIzaSyBccMlr870nVuLA3NoBiH-_Qzh-nMVskbc'; -->
+	<!-- const CLIENT_ID = '15421780877-bdq0gup6cv50fdaalpec8ct2n96bkhgm.apps.googleusercontent.com '; -->
+	
+	const SIGN_IN_DIV_ID = '#signInStuff';
+	const DATA_ENTRY_DIV_ID = '#dataEntryStuff';
+	const SIGN_IN_HEADER_ID = '#signInHeader';
+
+	
+    function makeApiCall() {
+      var params = {
+        // The ID of the spreadsheet to retrieve data from.
+        spreadsheetId: SPREADSHEET_ID,  // TODO: Update placeholder value.
+
+        // The A1 notation of the values to retrieve.
+        range: 'a1:i1',  // TODO: Update placeholder value.
+
+        // How values should be represented in the output.
+        // The default render option is ValueRenderOption.FORMATTED_VALUE.
+        valueRenderOption: 'FORMATTED_VALUE',  // TODO: Update placeholder value.
+
+        // How dates, times, and durations should be represented in the output.
+        // This is ignored if value_render_option is
+        // FORMATTED_VALUE.
+        // The default dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        dateTimeRenderOption: 'FORMATTED_STRING',  // TODO: Update placeholder value.
+      };
+
+      var request = gapi.client.sheets.spreadsheets.values.get(params);
+      request.then(function(response) {
+        // TODO: Change code below to process the `response` object:
+        //console.log(response.result);
+		printResults(response.result);
+      }, function(reason) {
+        console.error('error: ' + reason.result.error.message);
+      });
+    }
+
+    function initClient() {
+      
+      // TODO: Authorize using one of the following scopes:
+      //   'https://www.googleapis.com/auth/drive'
+      //   'https://www.googleapis.com/auth/drive.file'
+      //   'https://www.googleapis.com/auth/drive.readonly'
+      //   'https://www.googleapis.com/auth/spreadsheets'
+      //   'https://www.googleapis.com/auth/spreadsheets.readonly'
+      var SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+
+      gapi.client.init({
+        'apiKey': API_KEY,
+        'clientId': CLIENT_ID,
+        'scope': SCOPE,
+        'discoveryDocs': ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+      }).then(function() {
+        gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
+        updateSignInStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+      });
+    }
+
+    function handleClientLoad() {	
+		gapi.load('client:auth2', {
+			callback: function() {
+			// Handle gapi.client initialization.
+			initClient();
+		},
+		onerror: function() {
+			// Handle loading error.
+			alert('gapi.client failed to load!');
+		},
+		timeout: 5000, // 5 seconds.
+		ontimeout: function() {
+			// Handle timeout.
+			alert('gapi.client could not load in a timely manner!');
+		}
+		});
+    }
+
+    function updateSignInStatus(isSignedIn) {
+      if (isSignedIn) {
+		init();
+      }
+    }
+
+    function handleSignInClick(event) {
+      gapi.auth2.getAuthInstance().signIn();
+    }
+
+    function handleSignOutClick(event) {
+      gapi.auth2.getAuthInstance().signOut();
+    }
+	
+	function printResults(result) {
+		console.log('printing');
+		var values = result.values;
+		if(values.length > 0) {
+			alert(values[0]);
+		}
+	}
+    </script>
+    <script async defer src="https://apis.google.com/js/api.js"
+      onload="this.onload=function(){};handleClientLoad()"
+      onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>		<!-- For Jquery -->
+	<script src="inputTest.js"></script>			<!-- Our javascript file -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	
+	<div id="dataEntryStuff" style="float: left; width: 50%; margin-left: 25%; margin-top: 5%">
+		<form class="form-inline">
+			<span class="lead">Search for variable: </span><input class="form-control" type="text" id="searchField"></input>     <button type="button" class="btn btn-primary" id="search-button">Search</button>
+		</form>
+		<br>
+		<select class="form-control" id="categoryDropdown">
+			<option value="label" disabled selected>Select Category</option>
+		</select>
+		<select class="form-control" id="varGroupDropdown">
+			<option value="label" disabled selected>Select Variable Group</option>
+		</select>
+		<select class="form-control" id="varDropdown">
+			<option value="label" disabled selected>Select Variable</option>
+		</select>
+		<select class="form-control" id="month">
+		</select>
+		
+		<br>
+		
+		<form class="form-inline">
+			<span class="lead">Data to send: </span><input class="form-control" type="text" id="dataInput"></input>
+		</form>
+		<br><br><br>
+		<button class="btn btn-success btn-lg" id="submit-button">Send Data to Database </button>
+	</div>
+	
+	<div id="signInStuff" style="float: left; width: 50%; margin-left: 25%">
+		<h1 id="signInHeader" class="text-center">Please sign in to use this site.</h1>
+		<br><br>
+		<button id="signin-button" type="button" class="btn btn-primary btn-lg btn-block" onclick="handleSignInClick()">        Sign in        </button>
+		<button id="signout-button" type="button" class="btn btn-danger btn-lg btn-block" onclick="handleSignOutClick()">        Sign out        </button>
+		
+	</div>
+	<br><br><br>
+  </body>
+</html>
